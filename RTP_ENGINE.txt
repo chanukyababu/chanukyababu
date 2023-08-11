@@ -1,0 +1,55 @@
+1. Debian 11. This OS version relies on nftables rather than iptables and rtpengine relies on iptables. Thus it is required to remove nftables and a add iptables back.
+apt-get remove --auto-remove nftables
+apt-get purge nftables
+apt-get update
+
+2. Now install iptables
+apt-get install iptables-persistent iptables
+
+3. Install the packages required to clone the repository
+
+apt-get dist-upgrade --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages gnupg gnupg2 git mc
+
+4. Clone rtpengine, please select the latest branch instead of the master
+
+cd /usr/src
+git clone https://github.com/sipwise/rtpengine.git -b mr11.2.1
+
+5. Install the dependencies
+
+apt install dpkg-dev default-libmysqlclient-dev gperf libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev libbencode-perl libcrypt-openssl-rsa-perl libcrypt-rijndael-perl libcurl4-openssl-dev libdigest-crc-perl libdigest-hmac-perl libevent-dev libglib2.0-dev libhiredis-dev libio-multiplex-perl libio-socket-inet6-perl libiptc-dev libjson-glib-dev libjson-perl libmosquitto-dev libnet-interface-perl libpcap0.8-dev libpcre3-dev libsocket6-perl libspandsp-dev libssl-dev libswresample-dev libsystemd-dev libwebsockets-dev libxmlrpc-core-c3-dev libxtables-dev markdown python3-websockets zlib1g-dev debhelper-compat libbcg729-dev
+
+6. Check if there is no dependency left and install accordingly.
+
+cd /usr/src/rtpengine 
+dpkg-checkbuilddeps
+
+7. Build the package.
+
+dpkg-buildpackage -d
+
+8. Install.
+
+cd /usr/src/
+export PATH=$PATH:/sbin
+dpkg -i *.deb
+apt install -fix-broken
+
+9. Check the status
+
+systemctl restart ngcp-rtpengine-daemon
+systemctl status ngcp-rtpengine-daemon
+
+
+1.To connect calls through RTP engine in a Debian server, you can follow these steps:
+
+Configure your SIP proxy (e.g. Kamailio, Asterisk, etc.) to send RTP traffic to the RTP engine. This typically involves setting the "rtpengine" parameter in the SIP proxy's configuration file to the IP address and port number of the RTP engine. For example, in Kamailio, you can add the following lines to your kamailio.cfg file:
+
+loadmodule "rtpengine.so"
+modparam("rtpengine", "rtpengine_sock", "udp:127.0.0.1:22222")
+
+This configures Kamailio to send RTP traffic to the RTP engine running on the same server, listening on UDP port 22222.
+
+2. Configure your SIP user agents (e.g. softphones, SIP phones, etc.) to use your SIP proxy as the outbound proxy.
+
+3. Make a call between two SIP user agents. The SIP proxy should route the call through the RTP engine, which will handle the RTP traffic for the call.
